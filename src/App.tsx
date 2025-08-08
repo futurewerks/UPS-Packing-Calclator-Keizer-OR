@@ -129,7 +129,7 @@ function App() {
                   Always verify box recommendations with official UPS Store guidelines and staff before shipping.
                 </p>
                 <p className="mt-2">
-                  This tool only includes the recommended box list from TUPSS Guidelines - your store may carry other box dimensions that are not considered in this tool.
+                  This tool uses the specific box inventory available at Store 5374 (Keizer, OR) based on TUPSS Guidelines - other UPS Store locations may carry different box dimensions that are not considered in this tool.
                 </p>
               </div>
             </div>
