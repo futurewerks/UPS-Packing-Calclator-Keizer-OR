@@ -1,15 +1,5 @@
 // UPS Store Box Database - TUPSS 5374 Keizer, OR
-export interface Box {
-  l: number;
-  w: number;
-  h: number;
-  tag: string;
-  burst?: number | string;
-  wall?: string;
-  maxWeight?: number | null;
-  sizeSum?: number | null;
-  note?: string;
-}
+import { Box, PackingRequirements } from './types';
 
 // Box inventory sorted by volume ascending
 export const boxes: Box[] = [
@@ -103,12 +93,6 @@ export const mailers = {
     { l: 3, w: 36 }, { l: 3, w: 48 }
   ]
 };
-
-export interface PackingRequirements {
-  buffer: number;
-  weightMultiplier: number;
-  description: string;
-}
 
 export const packingTypes: Record<string, PackingRequirements> = {
   basic: {

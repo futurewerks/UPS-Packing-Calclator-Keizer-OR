@@ -1,74 +1,19 @@
-import { boxes as boxDatabase } from '../boxDatabase';
-import { packingTypes } from '../boxDatabase';
-
-interface ItemData {
-  length: number;
-  width: number;
-  height: number;
-  weight?: number;
-  packingType: string;
-  customBuffer?: number;
-  includeSpecialty?: boolean;
-  includeWardrobe?: boolean;
-}
-
-interface Box {
-  l: number;
-  w: number;
-  h: number;
-  tag: string;
-  burst: number;
-  wall: string;
-  maxWeight?: number;
-  sizeSum?: number;
-}
-
-interface RejectedBox extends Box {
-  rejectionReason: string;
-}
-interface BoxRecommendation {
-  box?: Box;
-  telescopedBox?: {
-    box1: Box;
-    combinedHeight: number;
-    combinedDimensions: string;
-    overlap: number;
-    rotated?: boolean;
-  };
-  warnings: string[];
-  error?: string;
-  errorDetails?: {
-    requiredDimensions: string;
-    largestAvailableFootprint: string;
-    issue: string;
-  };
-  calculations?: {
-    originalDimensions: string;
-    bufferApplied: string;
-    requiredDimensions: string;
-    rejectedBoxes: RejectedBox[];
-  };
-}
+import { boxes as boxDatabase, packingTypes } from '../boxDatabase';
+import { 
+  Box, 
+  ItemData, 
+  BoxRecommendation, 
+  RejectedBox,
+  TELESCOPING_WEIGHT_MULTIPLIER,
+  BOX_TYPE_CONFIG,
+  BoxTag
+} from '../types';
 
 // Configurable telescoping overlap by box type
 function getTelescopingOverlap(box: Box): number {
-  // Different overlap requirements by box type for structural integrity
-  switch (box.tag) {
-    case 'regular':
-      return 4; // Standard corrugated needs 4" overlap
-    case 'specialty':
-      return 5; // Specialty boxes need more overlap due to shape
-    case 'wardrobe':
-      return 6; // Large wardrobe boxes need extra overlap
-    case 'art':
-      return 3; // Art boxes are flatter, less overlap needed
-    default:
-      return 4; // Default fallback
-  }
+  const boxTag = box.tag as BoxTag;
+  return BOX_TYPE_CONFIG[boxTag]?.telescopingOverlap || 4; // Default fallback
 }
-
-// Conservative telescoping weight multiplier for safety
-const TELESCOPING_WEIGHT_MULTIPLIER = 1.6;
 
 function getBuffer(packingType: string, customBuffer?: number): number {
   if (packingType === 'custom' && customBuffer !== undefined) {
@@ -147,12 +92,20 @@ function getBoxRejectionReason(requiredL: number, requiredW: number, requiredH: 
   
   return reasons.length > 0 ? reasons.join(' & ') : 'dimensions or weight constraint';
 }
-function findSingleBox(requiredL: number, requiredW: number, requiredH: number, weight?: number): Box | null {
-  // Filter boxes based on type preferences - include all by default
-  let availableBoxes = boxDatabase;
-  
-  // For now, include all box types in recommendations
-  // Future enhancement: could add toggles for specialty/wardrobe boxes
+function findSingleBox(
+  requiredL: number, 
+  requiredW: number, 
+  requiredH: number, 
+  weight?: number,
+  includeSpecialty: boolean = true,
+  includeWardrobe: boolean = true
+): Box | null {
+  // Filter boxes based on type preferences
+  let availableBoxes = boxDatabase.filter(box => {
+    if (box.tag === 'specialty' && !includeSpecialty) return false;
+    if (box.tag === 'wardrobe' && !includeWardrobe) return false;
+    return true;
+  });
   
   const candidates = availableBoxes.filter(box => {
     const fitsSize = tryBoxFit(requiredL, requiredW, requiredH, box);
@@ -164,24 +117,51 @@ function findSingleBox(requiredL: number, requiredW: number, requiredH: number, 
 
   // Sort by efficiency (least waste), with preference for regular boxes
   candidates.sort((a, b) => {
-    // Prefer regular boxes over specialty boxes for general use
+    // First priority: Prefer regular boxes over specialty boxes for general use
     if (a.tag === 'regular' && b.tag !== 'regular') return -1;
     if (b.tag === 'regular' && a.tag !== 'regular') return 1;
     
-    // Then sort by least waste
+    // Second priority: Sort by least waste (volume efficiency)
     const wasteA = (a.l * a.w * a.h) - (requiredL * requiredW * requiredH);
     const wasteB = (b.l * b.w * b.h) - (requiredL * requiredW * requiredH);
-    return wasteA - wasteB;
+    if (Math.abs(wasteA - wasteB) > 50) { // Only use volume if difference is significant
+      return wasteA - wasteB;
+    }
+    
+    // Third priority: Tighter height fit (safer for stacking/handling)
+    const heightWasteA = a.h - requiredH;
+    const heightWasteB = b.h - requiredH;
+    if (Math.abs(heightWasteA - heightWasteB) > 1) {
+      return heightWasteA - heightWasteB;
+    }
+    
+    // Fourth priority: Closest to longest dimension (better fit)
+    const maxRequired = Math.max(requiredL, requiredW, requiredH);
+    const maxDiffA = Math.abs(Math.max(a.l, a.w, a.h) - maxRequired);
+    const maxDiffB = Math.abs(Math.max(b.l, b.w, b.h) - maxRequired);
+    return maxDiffA - maxDiffB;
   });
 
   return candidates[0];
 }
 
-function findTelescopingBox(requiredL: number, requiredW: number, requiredH: number, weight?: number): BoxRecommendation['telescopedBox'] | null {
-  // Find boxes that can accommodate the footprint - prioritize regular boxes for telescoping
-  const footprintCandidates = boxDatabase.filter(box => {
-    // Prefer regular boxes for telescoping (more reliable structure)
-    if (box.tag !== 'regular' && box.tag !== 'specialty') return false;
+function findTelescopingBox(
+  requiredL: number, 
+  requiredW: number, 
+  requiredH: number, 
+  weight?: number,
+  includeSpecialty: boolean = true,
+  includeWardrobe: boolean = true
+): BoxRecommendation['telescopedBox'] | null {
+  // Filter available boxes based on preferences
+  const availableBoxes = boxDatabase.filter(box => {
+    if (box.tag === 'specialty' && !includeSpecialty) return false;
+    if (box.tag === 'wardrobe' && !includeWardrobe) return false;
+    // Prefer regular and specialty boxes for telescoping (more reliable structure)
+    return box.tag === 'regular' || box.tag === 'specialty' || (box.tag === 'wardrobe' && includeWardrobe);
+  });
+  
+  const footprintCandidates = availableBoxes.filter(box => {
     
     const fitsFootprint = (box.l >= requiredL && box.w >= requiredW) ||
                          (box.l >= requiredW && box.w >= requiredL);
@@ -230,7 +210,16 @@ function findTelescopingBox(requiredL: number, requiredW: number, requiredH: num
 }
 
 export function findBestBox(data: ItemData): BoxRecommendation {
-  const { length, width, height, weight, packingType, customBuffer } = data;
+  const { 
+    length, 
+    width, 
+    height, 
+    weight, 
+    packingType, 
+    customBuffer,
+    includeSpecialty = true,
+    includeWardrobe = true
+  } = data;
   const buffer = getBuffer(packingType, customBuffer);
   
   const requiredL = length + (buffer * 2);
@@ -242,7 +231,10 @@ export function findBestBox(data: ItemData): BoxRecommendation {
   // Find boxes that were too small (for educational purposes)
   const rejectedBoxes: RejectedBox[] = boxDatabase
     .filter(box => {
-      // Include all box types in rejected analysis for educational purposes
+      // Filter based on user preferences for rejected analysis
+      if (box.tag === 'specialty' && !includeSpecialty) return false;
+      if (box.tag === 'wardrobe' && !includeWardrobe) return false;
+      
       // Only show boxes that don't fit and are reasonably close in size
       const fitsSize = tryBoxFit(requiredL, requiredW, requiredH, box);
       const fitsWeight = !weight || !box.maxWeight || weight <= box.maxWeight;
@@ -276,7 +268,7 @@ export function findBestBox(data: ItemData): BoxRecommendation {
     .slice(0, 5); // Show up to 5 rejected boxes from expanded inventory
   
   // Try single box first
-  const singleBox = findSingleBox(requiredL, requiredW, requiredH, weight);
+  const singleBox = findSingleBox(requiredL, requiredW, requiredH, weight, includeSpecialty, includeWardrobe);
   if (singleBox) {
     // Add warnings based on item characteristics
     if (weight && weight > 50) {
@@ -297,6 +289,12 @@ export function findBestBox(data: ItemData): BoxRecommendation {
       warnings.push("Art box - ideal for flat items and artwork");
     }
     
+    // Add box-specific weight warnings
+    const boxConfig = BOX_TYPE_CONFIG[singleBox.tag as BoxTag];
+    if (weight && boxConfig && weight > boxConfig.warningThreshold) {
+      warnings.push(`Heavy load for ${boxConfig.displayName.toLowerCase()} box - verify structural integrity`);
+    }
+    
     return { 
       box: singleBox, 
       warnings,
@@ -310,7 +308,7 @@ export function findBestBox(data: ItemData): BoxRecommendation {
   }
   
   // Try telescoping
-  const telescopedBox = findTelescopingBox(requiredL, requiredW, requiredH, weight);
+  const telescopedBox = findTelescopingBox(requiredL, requiredW, requiredH, weight, includeSpecialty, includeWardrobe);
   if (telescopedBox) {
     warnings.push("Telescoping required - use heavy-duty packing tape on all joints");
     warnings.push("Reinforce the telescoped seam with extra tape for structural integrity");
