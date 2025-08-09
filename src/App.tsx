@@ -301,49 +301,53 @@ function App() {
                 <div className="space-y-2 sm:space-y-3">
                   <div className="bg-gray-50/50 rounded-lg p-3 sm:p-4 border border-gray-200">
                     {/* Specialty Toggle */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1 pr-4">
                         <div>
-                          <div className="text-sm font-semibold text-gray-900">Include Specialty Boxes</div>
+                          <div className="text-sm font-semibold text-gray-900 mb-1">Include Specialty Boxes</div>
                           <div className="text-xs text-gray-600 leading-relaxed">Long/odd shapes including golf club, guitar, and bike boxes</div>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleBooleanToggle('includeSpecialty')}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                          packageData.includeSpecialty ? 'bg-blue-600' : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
-                            packageData.includeSpecialty ? 'translate-x-5' : 'translate-x-1'
+                      <div className="flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleBooleanToggle('includeSpecialty')}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                            packageData.includeSpecialty ? 'bg-blue-600' : 'bg-gray-300'
                           }`}
-                        />
-                      </button>
+                        >
+                          <span
+                            className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
+                              packageData.includeSpecialty ? 'translate-x-5' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </div>
                     
                     {/* Wardrobe Toggle */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 pr-4">
                         <div>
-                          <div className="text-sm font-semibold text-gray-900">Include Wardrobe Boxes</div>
+                          <div className="text-sm font-semibold text-gray-900 mb-1">Include Wardrobe Boxes</div>
                           <div className="text-xs text-gray-600 leading-relaxed">Large clothing boxes that may require special handling</div>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleBooleanToggle('includeWardrobe')}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                          packageData.includeWardrobe ? 'bg-blue-600' : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
-                            packageData.includeWardrobe ? 'translate-x-5' : 'translate-x-1'
+                      <div className="flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleBooleanToggle('includeWardrobe')}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                            packageData.includeWardrobe ? 'bg-blue-600' : 'bg-gray-300'
                           }`}
-                        />
-                      </button>
+                        >
+                          <span
+                            className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
+                              packageData.includeWardrobe ? 'translate-x-5' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </div>
                     
                     {/* Exclusion Warning */}
