@@ -25,8 +25,6 @@ export interface ItemData {
   weight?: number;
   packingType: string;
   customBuffer?: number;
-  includeSpecialty?: boolean;
-  includeWardrobe?: boolean;
 }
 
 export interface RejectedBox extends Box {

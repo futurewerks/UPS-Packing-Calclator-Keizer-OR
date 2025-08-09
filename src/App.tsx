@@ -11,8 +11,6 @@ interface PackageData {
   weight: string;
   packingType: string;
   customBuffer: string;
-  includeSpecialty: boolean;
-  includeWardrobe: boolean;
 }
 
 function App() {
@@ -22,9 +20,7 @@ function App() {
     height: '',
     weight: '',
     packingType: 'standard',
-    customBuffer: '2',
-    includeSpecialty: true,
-    includeWardrobe: true
+    customBuffer: '2'
   });
 
   const [isCalculating, setIsCalculating] = useState(false);
@@ -46,14 +42,6 @@ function App() {
     setResult(null);
   };
 
-  const handleBooleanToggle = (field: 'includeSpecialty' | 'includeWardrobe') => {
-    setPackageData(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
-    setResult(null);
-  };
-  const handleCalculate = async () => {
     const length = parseFloat(packageData.length);
     const width = parseFloat(packageData.width);
     const height = parseFloat(packageData.height);
@@ -75,9 +63,7 @@ function App() {
       height,
       weight,
       packingType: packageData.packingType,
-      customBuffer,
-      includeSpecialty: packageData.includeSpecialty,
-      includeWardrobe: packageData.includeWardrobe
+      customBuffer
     });
     
     if (recommendation) {
@@ -294,72 +280,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Advanced Options */}
-              <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
-                  Box Type Options
-                </label>
-                <div className="space-y-2 sm:space-y-3">
-                  <div className="bg-gray-50/50 rounded-lg p-3 sm:p-4 border border-gray-200">
-                    {/* Specialty Toggle */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">⚡</span>
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900">Include Specialty Boxes</div>
-                          <div className="text-xs text-gray-600">Long/odd shapes (golf, guitar, bike boxes)</div>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleBooleanToggle('includeSpecialty')}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                          packageData.includeSpecialty ? 'bg-blue-600' : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
-                            packageData.includeSpecialty ? 'translate-x-5' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    
-                    {/* Wardrobe Toggle */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">👔</span>
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900">Include Wardrobe Boxes</div>
-                          <div className="text-xs text-gray-600">Large clothing boxes (may require special handling)</div>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleBooleanToggle('includeWardrobe')}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                          packageData.includeWardrobe ? 'bg-blue-600' : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
-                            packageData.includeWardrobe ? 'translate-x-5' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    
-                    {/* Exclusion Warning */}
-                    {(!packageData.includeSpecialty || !packageData.includeWardrobe) && (
-                      <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
-                        <p className="text-xs text-yellow-700 font-medium">
-                          ⚠️ Some box options are excluded - this may limit available recommendations
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
 
               {/* Calculate Button */}
               <button
@@ -756,11 +676,6 @@ function App() {
                     {boxes
                       .slice()
                       .sort((a, b) => (a.l * a.w * a.h) - (b.l * b.w * b.h))
-                      .filter(box => {
-                        if (box.tag === 'specialty' && !packageData.includeSpecialty) return false;
-                        if (box.tag === 'wardrobe' && !packageData.includeWardrobe) return false;
-                        return true;
-                      })
                       .map((box, index) => (
                       <tr 
                         key={index} 
