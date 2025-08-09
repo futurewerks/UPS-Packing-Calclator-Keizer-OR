@@ -42,6 +42,7 @@ function App() {
     setResult(null);
   };
 
+  const handleCalculate = async () => {
     const length = parseFloat(packageData.length);
     const width = parseFloat(packageData.width);
     const height = parseFloat(packageData.height);
