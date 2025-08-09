@@ -105,29 +105,29 @@ export const mailers = {
 };
 
 export interface PackingRequirements {
-  minPadding: number;
+  buffer: number;
   weightMultiplier: number;
   description: string;
 }
 
 export const packingTypes: Record<string, PackingRequirements> = {
   basic: {
-    minPadding: 1,
+    buffer: 1,
     weightMultiplier: 1.0,
     description: '+1 inch per side - Minimal protection'
   },
   standard: {
-    minPadding: 2,
+    buffer: 2,
     weightMultiplier: 1.0,
     description: '+2 inches per side - Standard protection'
   },
   fragile: {
-    minPadding: 4,
+    buffer: 4,
     weightMultiplier: 1.0,
     description: '+4 inches per side - Extra protection'
   },
   custom: {
-    minPadding: 2,
+    buffer: 2,
     weightMultiplier: 1.0,
     description: 'User-defined buffer - Custom protection'
   }

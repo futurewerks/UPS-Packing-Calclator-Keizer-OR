@@ -1,4 +1,5 @@
 import { boxes as boxDatabase } from '../boxDatabase';
+import { packingTypes } from '../boxDatabase';
 
 interface ItemData {
   length: number;
@@ -42,25 +43,6 @@ interface BoxRecommendation {
 }
 
 const OVERLAP = 4; // Standard telescoping overlap in inches
-
-export const packingTypes = {
-  basic: {
-    buffer: 1,
-    description: "Minimal padding for sturdy items"
-  },
-  standard: {
-    buffer: 2,
-    description: "Standard protection for most items"
-  },
-  fragile: {
-    buffer: 4,
-    description: "Extra padding for delicate items"
-  },
-  custom: {
-    buffer: 2,
-    description: "Custom buffer amount"
-  }
-};
 
 function getBuffer(packingType: string, customBuffer?: number): number {
   if (packingType === 'custom' && customBuffer !== undefined) {
