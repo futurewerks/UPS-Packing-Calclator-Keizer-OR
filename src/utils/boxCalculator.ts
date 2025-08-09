@@ -141,9 +141,20 @@ function findTelescopingBox(
   requiredL: number, 
   requiredW: number, 
   requiredH: number, 
-  weight?: number
+  weight?: number,
+  includeSpecialty: boolean = true,
+  includeWardrobe: boolean = true
 ): BoxRecommendation['telescopedBox'] | null {
-  const footprintCandidates = boxDatabase.filter(box => {
+  // Filter available boxes based on preferences
+  const availableBoxes = boxDatabase.filter(box => {
+    if (box.tag === 'specialty' && !includeSpecialty) return false;
+    if (box.tag === 'wardrobe' && !includeWardrobe) return false;
+    // Prefer regular and specialty boxes for telescoping (more reliable structure)
+    return box.tag === 'regular' || box.tag === 'specialty' || (box.tag === 'wardrobe' && includeWardrobe);
+  });
+  
+  const footprintCandidates = availableBoxes.filter(box => {
+    
     const fitsFootprint = (box.l >= requiredL && box.w >= requiredW) ||
                          (box.l >= requiredW && box.w >= requiredL);
     // Conservative weight limit for telescoping safety
