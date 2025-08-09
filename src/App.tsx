@@ -341,9 +341,9 @@ function App() {
                         <div className="bg-white/50 rounded-lg p-4 border border-red-100">
                           <h4 className="font-semibold text-red-900 mb-2">📏 Size Analysis:</h4>
                           <div className="text-red-800 text-sm space-y-1">
-                            <p><strong>Your item requires:</strong> {result.recommendation.errorDetails.requiredDimensions}</p>
-                            <p><strong>Largest available box footprint:</strong> {result.recommendation.errorDetails.largestAvailableFootprint}</p>
-                            <p><strong>Issue:</strong> {result.recommendation.errorDetails.issue}</p>
+                              <p><strong>Your item requires:</strong> {result.recommendation.errorDetails.requiredDimensions}</p>
+                              <p><strong>Largest available box footprint:</strong> {result.recommendation.errorDetails.largestAvailableFootprint}</p>
+                              <p><strong>Issue:</strong> {result.recommendation.errorDetails.issue}</p>
                           </div>
                         </div>
                       </div>
@@ -579,10 +579,15 @@ function App() {
                               <div className="space-y-1">
                                 {result.recommendation.calculations.rejectedBoxes.map((box, index) => (
                                   <div key={index} className="text-xs sm:text-sm text-indigo-700 bg-indigo-50/50 rounded p-2">
-                                    <span className="font-bold">{formatBoxSize(box)}</span>
-                                    <span className="text-indigo-600 ml-2">
-                                      - {box.burst} PSI, {box.wall} wall, max {box.maxWeight || 'N/A'} lbs
-                                    </span>
+                                    <div className="flex flex-col">
+                                      <span className="font-bold">{formatBoxSize(box)}</span>
+                                      <span className="text-indigo-600 text-xs">
+                                        {box.burst} PSI, {box.wall} wall, max {box.maxWeight || 'N/A'} lbs
+                                      </span>
+                                      <span className="text-red-600 text-xs font-medium">
+                                        ⚠️ {box.rejectionReason}
+                                      </span>
+                                    </div>
                                   </div>
                                 ))}
                               </div>

@@ -23,6 +23,9 @@ interface Box {
   sizeSum?: number;
 }
 
+interface RejectedBox extends Box {
+  rejectionReason: string;
+}
 interface BoxRecommendation {
   box?: Box;
   telescopedBox?: {
@@ -34,15 +37,38 @@ interface BoxRecommendation {
   };
   warnings: string[];
   error?: string;
+  errorDetails?: {
+    requiredDimensions: string;
+    largestAvailableFootprint: string;
+    issue: string;
+  };
   calculations?: {
     originalDimensions: string;
     bufferApplied: string;
     requiredDimensions: string;
-    rejectedBoxes: Box[];
+    rejectedBoxes: RejectedBox[];
   };
 }
 
-const OVERLAP = 4; // Standard telescoping overlap in inches
+// Configurable telescoping overlap by box type
+function getTelescopingOverlap(box: Box): number {
+  // Different overlap requirements by box type for structural integrity
+  switch (box.tag) {
+    case 'regular':
+      return 4; // Standard corrugated needs 4" overlap
+    case 'specialty':
+      return 5; // Specialty boxes need more overlap due to shape
+    case 'wardrobe':
+      return 6; // Large wardrobe boxes need extra overlap
+    case 'art':
+      return 3; // Art boxes are flatter, less overlap needed
+    default:
+      return 4; // Default fallback
+  }
+}
+
+// Conservative telescoping weight multiplier for safety
+const TELESCOPING_WEIGHT_MULTIPLIER = 1.6;
 
 function getBuffer(packingType: string, customBuffer?: number): number {
   if (packingType === 'custom' && customBuffer !== undefined) {
@@ -67,6 +93,60 @@ function tryBoxFit(itemL: number, itemW: number, itemH: number, box: Box): boole
   );
 }
 
+function getBoxRejectionReason(requiredL: number, requiredW: number, requiredH: number, box: Box, weight?: number): string {
+  const reasons: string[] = [];
+  
+  // Check dimensional shortfalls
+  const orientations = [
+    { dims: [requiredL, requiredW, requiredH], labels: ['L', 'W', 'H'] },
+    { dims: [requiredL, requiredH, requiredW], labels: ['L', 'H', 'W'] },
+    { dims: [requiredW, requiredL, requiredH], labels: ['W', 'L', 'H'] },
+    { dims: [requiredW, requiredH, requiredL], labels: ['W', 'H', 'L'] },
+    { dims: [requiredH, requiredL, requiredW], labels: ['H', 'L', 'W'] },
+    { dims: [requiredH, requiredW, requiredL], labels: ['H', 'W', 'L'] }
+  ];
+  
+  // Find the orientation with the smallest shortfall
+  let minShortfall = Infinity;
+  let bestReason = '';
+  
+  orientations.forEach(({ dims, labels }) => {
+    const [reqL, reqW, reqH] = dims;
+    const shortfalls: string[] = [];
+    let totalShortfall = 0;
+    
+    if (reqL > box.l) {
+      const shortage = reqL - box.l;
+      shortfalls.push(`length short by ${shortage.toFixed(1)}"`);
+      totalShortfall += shortage;
+    }
+    if (reqW > box.w) {
+      const shortage = reqW - box.w;
+      shortfalls.push(`width short by ${shortage.toFixed(1)}"`);
+      totalShortfall += shortage;
+    }
+    if (reqH > box.h) {
+      const shortage = reqH - box.h;
+      shortfalls.push(`height short by ${shortage.toFixed(1)}"`);
+      totalShortfall += shortage;
+    }
+    
+    if (shortfalls.length > 0 && totalShortfall < minShortfall) {
+      minShortfall = totalShortfall;
+      bestReason = shortfalls.join(', ');
+    }
+  });
+  
+  if (bestReason) reasons.push(bestReason);
+  
+  // Check weight constraint
+  if (weight && box.maxWeight && weight > box.maxWeight) {
+    const overage = weight - box.maxWeight;
+    reasons.push(`weight over by ${overage.toFixed(1)} lbs`);
+  }
+  
+  return reasons.length > 0 ? reasons.join(' & ') : 'dimensions or weight constraint';
+}
 function findSingleBox(requiredL: number, requiredW: number, requiredH: number, weight?: number): Box | null {
   // Filter boxes based on type preferences - include all by default
   let availableBoxes = boxDatabase;
@@ -105,7 +185,8 @@ function findTelescopingBox(requiredL: number, requiredW: number, requiredH: num
     
     const fitsFootprint = (box.l >= requiredL && box.w >= requiredW) ||
                          (box.l >= requiredW && box.w >= requiredL);
-    const fitsWeight = !weight || !box.maxWeight || weight <= (box.maxWeight * 2); // Two boxes
+    // Conservative weight limit for telescoping safety
+    const fitsWeight = !weight || !box.maxWeight || weight <= (box.maxWeight * TELESCOPING_WEIGHT_MULTIPLIER);
     return fitsFootprint && fitsWeight;
   });
 
@@ -114,7 +195,8 @@ function findTelescopingBox(requiredL: number, requiredW: number, requiredH: num
   // Check which ones can provide enough combined height
   const viableCandidates = footprintCandidates
     .map(box => {
-      const combinedHeight = (box.h * 2) - OVERLAP;
+      const overlap = getTelescopingOverlap(box);
+      const combinedHeight = (box.h * 2) - overlap;
       if (combinedHeight < requiredH) return null;
 
       // Determine if rotation is needed
@@ -124,7 +206,7 @@ function findTelescopingBox(requiredL: number, requiredW: number, requiredH: num
         box1: box,
         combinedHeight,
         combinedDimensions: `${box.l}" × ${box.w}" × ${combinedHeight}"`,
-        overlap: OVERLAP,
+        overlap,
         rotated
       };
     })
@@ -158,7 +240,7 @@ export function findBestBox(data: ItemData): BoxRecommendation {
   const warnings: string[] = [];
   
   // Find boxes that were too small (for educational purposes)
-  const rejectedBoxes = boxDatabase
+  const rejectedBoxes: RejectedBox[] = boxDatabase
     .filter(box => {
       // Include all box types in rejected analysis for educational purposes
       // Only show boxes that don't fit and are reasonably close in size
@@ -176,6 +258,10 @@ export function findBestBox(data: ItemData): BoxRecommendation {
       return (Math.abs(maxBoxDim - maxRequiredDim) <= 4) || 
              (Math.abs(minBoxDim - minRequiredDim) <= 4);
     })
+    .map(box => ({
+      ...box,
+      rejectionReason: getBoxRejectionReason(requiredL, requiredW, requiredH, box, weight)
+    }))
     .sort((a, b) => {
       // Sort by box type preference first, then by size difference
       if (a.tag === 'regular' && b.tag !== 'regular') return -1;
@@ -229,6 +315,14 @@ export function findBestBox(data: ItemData): BoxRecommendation {
     warnings.push("Telescoping required - use heavy-duty packing tape on all joints");
     warnings.push("Reinforce the telescoped seam with extra tape for structural integrity");
     
+    // Add weight-based safety warnings for telescoping
+    if (weight && weight > (telescopedBox.box1.maxWeight || 0)) {
+      warnings.push(`Heavy load (${weight} lbs) - verify structural integrity with store staff before shipping`);
+    }
+    if (weight && telescopedBox.box1.maxWeight && weight > (telescopedBox.box1.maxWeight * 1.2)) {
+      warnings.push("Weight approaches telescoping safety limit - consider alternative packaging");
+    }
+    
     return { 
       telescopedBox, 
       warnings,
@@ -245,11 +339,16 @@ export function findBestBox(data: ItemData): BoxRecommendation {
   const maxAvailableL = Math.max(...boxDatabase.map(b => b.l));
   const maxAvailableW = Math.max(...boxDatabase.map(b => b.w));
   const maxAvailableH = Math.max(...boxDatabase.map(b => b.h));
-  const maxTelescopingH = Math.max(...boxDatabase.map(b => (b.h * 2) - OVERLAP));
+  const maxTelescopingH = Math.max(...boxDatabase.map(b => (b.h * 2) - getTelescopingOverlap(b)));
   
   return {
     warnings: [],
-    error: `Item dimensions exceed available box capacities.\n\nRequired: ${requiredL}" × ${requiredW}" × ${requiredH}"\nLargest available footprint: ${maxAvailableL}" × ${maxAvailableW}"\nMax single box height: ${maxAvailableH}"\nMax telescoping height: ${maxTelescopingH}"`
+    error: 'OVERSIZED_ITEM',
+    errorDetails: {
+      requiredDimensions: `${requiredL}" × ${requiredW}" × ${requiredH}"`,
+      largestAvailableFootprint: `${maxAvailableL}" × ${maxAvailableW}"`,
+      issue: `Item requires ${requiredL}" × ${requiredW}" footprint but largest available is ${maxAvailableL}" × ${maxAvailableW}"`
+    }
   };
 }
 
