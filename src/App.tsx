@@ -303,10 +303,9 @@ function App() {
                     {/* Specialty Toggle */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">⚡</span>
                         <div>
                           <div className="text-sm font-semibold text-gray-900">Include Specialty Boxes</div>
-                          <div className="text-xs text-gray-600">Long/odd shapes (golf, guitar, bike boxes)</div>
+                          <div className="text-xs text-gray-600 leading-relaxed">Long/odd shapes including golf club, guitar, and bike boxes</div>
                         </div>
                       </div>
                       <button
@@ -327,10 +326,9 @@ function App() {
                     {/* Wardrobe Toggle */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">👔</span>
                         <div>
                           <div className="text-sm font-semibold text-gray-900">Include Wardrobe Boxes</div>
-                          <div className="text-xs text-gray-600">Large clothing boxes (may require special handling)</div>
+                          <div className="text-xs text-gray-600 leading-relaxed">Large clothing boxes that may require special handling</div>
                         </div>
                       </div>
                       <button
