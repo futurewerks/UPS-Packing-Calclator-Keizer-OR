@@ -46,6 +46,13 @@ function App() {
     setResult(null);
   };
 
+  const handleBooleanToggle = (field: 'includeSpecialty' | 'includeWardrobe') => {
+    setPackageData(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+    setResult(null);
+  };
   const handleCalculate = async () => {
     const length = parseFloat(packageData.length);
     const width = parseFloat(packageData.width);
@@ -305,7 +312,7 @@ function App() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleInputChange('includeSpecialty', (!packageData.includeSpecialty).toString())}
+                        onClick={() => handleBooleanToggle('includeSpecialty')}
                         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                           packageData.includeSpecialty ? 'bg-blue-600' : 'bg-gray-300'
                         }`}
@@ -329,7 +336,7 @@ function App() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleInputChange('includeWardrobe', (!packageData.includeWardrobe).toString())}
+                        onClick={() => handleBooleanToggle('includeWardrobe')}
                         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                           packageData.includeWardrobe ? 'bg-blue-600' : 'bg-gray-300'
                         }`}
