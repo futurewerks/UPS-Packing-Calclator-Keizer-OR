@@ -92,6 +92,7 @@ function getBoxRejectionReason(requiredL: number, requiredW: number, requiredH: 
   
   return reasons.length > 0 ? reasons.join(' & ') : 'dimensions or weight constraint';
 }
+
 function findSingleBox(
   requiredL: number, 
   requiredW: number, 
@@ -99,6 +100,7 @@ function findSingleBox(
   weight?: number
 ): Box | null {
   const candidates = boxDatabase.filter(box => {
+    const fitsSize = tryBoxFit(requiredL, requiredW, requiredH, box);
     const fitsWeight = !weight || !box.maxWeight || weight <= box.maxWeight;
     return fitsSize && fitsWeight;
   });
@@ -141,7 +143,6 @@ function findTelescopingBox(
   requiredH: number, 
   weight?: number
 ): BoxRecommendation['telescopedBox'] | null {
-  // Prefer regular and specialty boxes for telescoping (more reliable structure)
   const footprintCandidates = boxDatabase.filter(box => {
     const fitsFootprint = (box.l >= requiredL && box.w >= requiredW) ||
                          (box.l >= requiredW && box.w >= requiredL);
