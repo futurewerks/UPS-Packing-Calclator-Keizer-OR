@@ -96,19 +96,19 @@ export const mailers = {
 
 export const packingTypes: Record<string, PackingRequirements> = {
   basic: {
-    buffer: 1,
+    buffer: 0,
     weightMultiplier: 1.0,
-    description: '+1 inch per side - Minimal protection'
+    description: '+0 inches per side - Minimal protection'
   },
   standard: {
-    buffer: 2,
+    buffer: 1,
     weightMultiplier: 1.0,
-    description: '+2 inches per side - Standard protection'
+    description: '+1 inch per side - Standard protection'
   },
   fragile: {
-    buffer: 4,
+    buffer: 3,
     weightMultiplier: 1.0,
-    description: '+4 inches per side - Extra protection'
+    description: '+3 inches per side - Extra protection'
   },
   custom: {
     buffer: 2,
