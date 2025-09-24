@@ -106,9 +106,9 @@ export const packingTypes: Record<string, PackingRequirements> = {
     description: '+1 inch per side - Standard protection'
   },
   fragile: {
-    buffer: 3,
+    buffer: 2,
     weightMultiplier: 1.0,
-    description: '+3 inches per side - Extra protection'
+    description: '+2 inches per side - Extra protection'
   },
   custom: {
     buffer: 2,
