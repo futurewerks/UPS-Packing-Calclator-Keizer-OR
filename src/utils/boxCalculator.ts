@@ -19,7 +19,7 @@ function getBuffer(packingType: string, customBuffer?: number): number {
   if (packingType === 'custom' && customBuffer !== undefined) {
     return customBuffer;
   }
-  return packingTypes[packingType as keyof typeof packingTypes]?.buffer || 2;
+  return packingTypes[packingType as keyof typeof packingTypes]?.buffer ?? 2;
 }
 
 function tryBoxFit(itemL: number, itemW: number, itemH: number, box: Box): boolean {
